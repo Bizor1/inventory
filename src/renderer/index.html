@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DOMINAK 757 POS System</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div id="loginScreen" class="login-screen">
+        <div class="login-container">
+            <h1>DOMINAK 757 BUSINESS CENTRE</h1>
+            <div class="role-selection">
+                <button class="role-btn active" data-role="cashier">Cashier</button>
+                <button class="role-btn" data-role="admin">Admin</button>
+            </div>
+            <input type="password" id="pinInput" maxlength="4" placeholder="Enter 4-digit PIN">
+            <button id="loginBtn">Login</button>
+            <div class="login-error hidden" id="loginError">Invalid PIN</div>
+            <div class="login-help">
+                <small>Default PINs: Admin = 1234, Cashier = 0000</small>
+            </div>
+        </div>
+    </div>
+
+    <div id="mainApp" class="main-app hidden">
+        <header class="app-header">
+            <h1>DOMINAK 757 BUSINESS CENTRE</h1>
+            <div class="user-info">
+                <span id="currentUserRole">Admin</span>
+                <button id="logoutBtn">Logout</button>
+            </div>
+        </header>
+
+        <nav class="app-nav">
+            <button class="nav-btn active" data-view="pos">POS</button>
+            <button class="nav-btn admin-only" data-view="dashboard">Dashboard</button>
+            <button class="nav-btn" data-view="inventory">Inventory</button>
+            <button class="nav-btn" data-view="sales">Sales</button>
+            <button class="nav-btn admin-only" data-view="users">Users</button>
+            <button class="nav-btn admin-only" data-view="reports">Reports</button>
+            <button class="nav-btn admin-only" data-view="settings">Settings</button>
+        </nav>
+
+        <main class="app-content">
+            <!-- POS View -->
+            <div class="view pos-view active" id="posView">
+                <div class="pos-container">
+                    <div class="pos-left">
+                        <div class="search-section">
+                            <input type="text" id="productSearch" placeholder="Search products or scan barcode...">
+                            <input type="text" id="barcodeInput" placeholder="Barcode">
+                        </div>
+                        <div class="product-grid" id="productGrid"></div>
+                    </div>
+                    <div class="pos-right">
+                        <h3>Cart</h3>
+                        <div id="cartItems"></div>
+                        <div class="cart-total">
+                            <span>Total: <span id="cartTotal">GHS 0.00</span></span>
+                        </div>
+                        
+                        <div class="payment-section">
+                            <div class="payment-methods">
+                                <button class="payment-btn active" data-method="cash">Cash</button>
+                                <button class="payment-btn" data-method="card">Card</button>
+                            </div>
+                            <button id="checkoutBtn" disabled>Complete Sale</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Dashboard -->
+            <div class="view dashboard-view" id="dashboardView">
+                <h2>Admin Dashboard</h2>
+                <div class="dashboard-grid">
+                    <div class="dashboard-card">
+                        <h3>Today's Sales</h3>
+                        <div class="metric">
+                            <span class="value" id="todaySalesCount">0</span>
+                            <span class="label">Transactions</span>
+                        </div>
+                        <div class="metric">
+                            <span class="value" id="todayRevenue">GHS 0.00</span>
+                            <span class="label">Revenue</span>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-card">
+                        <h3>This Month</h3>
+                        <div class="metric">
+                            <span class="value" id="monthSalesCount">0</span>
+                            <span class="label">Transactions</span>
+                        </div>
+                        <div class="metric">
+                            <span class="value" id="monthRevenue">GHS 0.00</span>
+                            <span class="label">Revenue</span>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-card">
+                        <h3>Inventory Status</h3>
+                        <div class="metric">
+                            <span class="value" id="totalProducts">0</span>
+                            <span class="label">Products</span>
+                        </div>
+                        <div class="metric">
+                            <span class="value" id="lowStockCount">0</span>
+                            <span class="label">Low Stock</span>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-card">
+                        <h3>System Status</h3>
+                        <div class="printer-status">
+                            <span class="status-indicator" id="printerIndicator">●</span>
+                            <span id="printerStatusText">Checking...</span>
+                        </div>
+                        <button id="testPrinterBtn" class="test-printer-btn">Test Printer</button>
+                    </div>
+                </div>
+
+                <div class="dashboard-sections">
+                    <div class="dashboard-section">
+                        <h3>Low Stock Alerts</h3>
+                        <div id="lowStockAlerts" class="alerts-container"></div>
+                    </div>
+
+                    <div class="dashboard-section">
+                        <h3>Top Selling Products</h3>
+                        <div id="topProducts" class="top-products-container"></div>
+                    </div>
+
+                    <div class="dashboard-section">
+                        <h3>Recent Sales</h3>
+                        <div id="recentSales" class="recent-sales-container"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Enhanced Inventory View -->
+            <div class="view inventory-view" id="inventoryView">
+                <div class="inventory-header">
+                    <h2>Inventory Management</h2>
+                    <div class="inventory-actions">
+                        <button class="btn-primary" onclick="showAddProductModal()">
+                            <i class="fas fa-plus"></i> Add Product
+                        </button>
+                        <button class="btn-secondary" onclick="showBulkUploadModal()">
+                            <i class="fas fa-upload"></i> Bulk Upload
+                        </button>
+                        <button class="btn-secondary" onclick="downloadCSVTemplate()">
+                            <i class="fas fa-download"></i> CSV Template
+                        </button>
+                        <button class="btn-secondary" onclick="downloadTemplate('excel')">
+                            <i class="fas fa-download"></i> Excel Template
+                        </button>
+                    </div>
+                </div>
+
+                <div class="inventory-filters">
+                    <input type="text" id="inventorySearch" placeholder="Search products...">
+                    <select id="categoryFilter">
+                        <option value="">All Categories</option>
+                    </select>
+                    <select id="stockFilter">
+                        <option value="">All Stock Levels</option>
+                        <option value="low">Low Stock</option>
+                        <option value="out">Out of Stock</option>
+                    </select>
+                </div>
+
+                <div class="inventory-content">
+                    <table id="inventoryTable" class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Category</th>
+                                <th>Barcode</th>
+                                <th>Stock</th>
+                                <th>Min Stock</th>
+                                <th>Purchase Price</th>
+                                <th>Selling Price</th>
+                                <th>Status</th>
+                                <th class="admin-only">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Enhanced Sales View -->
+            <div class="view sales-view" id="salesView">
+                <div class="sales-header">
+                    <h2>Sales Management</h2>
+                    <div class="date-range-picker">
+                        <input type="date" id="salesStartDate">
+                        <input type="date" id="salesEndDate">
+                        <button id="filterSalesBtn" class="btn-primary filter-btn">
+                            <i class="fas fa-filter"></i> Filter Sales
+                        </button>
+                    </div>
+                </div>
+
+                <div class="sales-summary">
+                    <div class="summary-card">
+                        <h3>Today's Summary</h3>
+                        <p>Sales: <span id="todayTotalSales">0</span></p>
+                        <p>Revenue: <span id="todayTotalRevenue">GHS 0.00</span></p>
+                    </div>
+                    <div class="summary-card">
+                        <h3>Period Summary</h3>
+                        <p>Sales: <span id="periodTotalSales">0</span></p>
+                        <p>Revenue: <span id="periodTotalRevenue">GHS 0.00</span></p>
+                    </div>
+                </div>
+
+                <div class="sales-content">
+                    <table id="salesTable" class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Receipt #</th>
+                                <th>Date</th>
+                                <th>User</th>
+                                <th>Items</th>
+                                <th>Payment</th>
+                                <th>Amount</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- User Management View -->
+            <div class="view users-view" id="usersView">
+                <div class="users-header">
+                    <h2>User Management</h2>
+                    <button id="addUserBtn" class="btn-primary admin-only">
+                        <i class="fas fa-user-plus"></i> Add New User
+                    </button>
+                </div>
+
+                <div class="users-content">
+                    <table id="usersTable" class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>Role</th>
+                                <th>Created</th>
+                                <th>Last Login</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Reports View -->
+            <div class="view reports-view" id="reportsView">
+                <h2>Reports & Analytics</h2>
+                
+                <div class="reports-nav">
+                    <button class="report-tab active" data-report="sales">Sales Report</button>
+                    <button class="report-tab" data-report="inventory">Inventory Report</button>
+                    <button class="report-tab" data-report="user-performance">User Performance</button>
+                </div>
+
+                <div class="report-content">
+                    <div class="report-filters">
+                        <input type="date" id="reportStartDate">
+                        <input type="date" id="reportEndDate">
+                        <button id="generateReportBtn" class="btn-primary">
+                            <i class="fas fa-chart-line"></i> Generate Report
+                        </button>
+                        <button id="exportReportBtn" class="btn-secondary">
+                            <i class="fas fa-download"></i> Export
+                        </button>
+                    </div>
+
+                    <div id="reportResults" class="report-results"></div>
+                </div>
+            </div>
+
+            <!-- Settings View -->
+            <div class="view settings-view" id="settingsView">
+                <h2>System Settings</h2>
+                
+                <div class="settings-content">
+                    <div class="settings-section">
+                        <h3>Business Information</h3>
+                        <div class="form-group">
+                            <label for="businessName">Business Name</label>
+                            <input type="text" id="businessName" value="DOMINAK 757 BUSINESS CENTRE">
+                        </div>
+                        <div class="form-group">
+                            <label for="businessPhone">Phone Number</label>
+                            <input type="text" id="businessPhone" value="0549831901">
+                        </div>
+                        <div class="form-group">
+                            <label for="businessAddress">Address</label>
+                            <input type="text" id="businessAddress" value="Ghana">
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3>System Configuration</h3>
+                        <div class="form-group">
+                            <label for="currency">Currency</label>
+                            <select id="currency">
+                                <option value="GHS">Ghana Cedi (GHS)</option>
+                                <option value="USD">US Dollar (USD)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="lowStockThreshold">Low Stock Threshold</label>
+                            <input type="number" id="lowStockThreshold" value="5">
+                        </div>
+                        <div class="form-group">
+                            <label for="sessionTimeout">Session Timeout (minutes)</label>
+                            <input type="number" id="sessionTimeout" value="30">
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3>Backup & Data</h3>
+                        <div class="backup-controls">
+                            <button id="backupBtn" class="btn-primary">Create Backup</button>
+                            <button id="exportDataBtn" class="btn-secondary">Export Data</button>
+                            <div id="systemInfo" class="system-info"></div>
+                        </div>
+                    </div>
+
+                    <div class="settings-actions">
+                        <button id="saveSettingsBtn" class="btn-primary">Save Settings</button>
+                        <button id="resetSettingsBtn" class="btn-secondary">Reset to Defaults</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="productModal" class="modal hidden">
+        <div class="modal-content">
+            <h3 id="productModalTitle">Add Product</h3>
+            <form id="productForm">
+                <div class="form-group">
+                    <label for="productName">Product Name *</label>
+                    <input type="text" id="productName" required>
+                </div>
+                <div class="form-group">
+                    <label for="productCategory">Category</label>
+                    <select id="productCategory"></select>
+                </div>
+                <div class="form-group">
+                    <label for="productBarcode">Barcode</label>
+                    <input type="text" id="productBarcode">
+                </div>
+                <div class="form-group">
+                    <label for="purchasePrice">Purchase Price</label>
+                    <input type="number" id="purchasePrice" step="0.01" min="0">
+                </div>
+                <div class="form-group">
+                    <label for="sellingPrice">Selling Price *</label>
+                    <input type="number" id="sellingPrice" step="0.01" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="stockQuantity">Stock Quantity</label>
+                    <input type="number" id="stockQuantity" min="0" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="minimumStock">Minimum Stock</label>
+                    <input type="number" id="minimumStock" min="0" value="5">
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="btn-primary">Save</button>
+                    <button type="button" class="btn-secondary" id="cancelProductBtn">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="categoryModal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Add Category</h3>
+            <form id="categoryForm">
+                <div class="form-group">
+                    <label for="categoryName">Category Name *</label>
+                    <input type="text" id="categoryName" required>
+                </div>
+                <div class="form-group">
+                    <label for="categoryDescription">Description</label>
+                    <textarea id="categoryDescription"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="btn-primary">Save</button>
+                    <button type="button" class="btn-secondary" id="cancelCategoryBtn">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="stockAdjustmentModal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Stock Adjustment</h3>
+            <form id="stockAdjustmentForm">
+                <div class="form-group">
+                    <label for="adjustmentProduct">Product</label>
+                    <select id="adjustmentProduct" required>
+                        <option value="">Select Product</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="adjustmentQuantity">Quantity Change</label>
+                    <input type="number" id="adjustmentQuantity" placeholder="Enter quantity (+ or -)" required>
+                    <small>Use positive numbers to add stock, negative to reduce</small>
+                </div>
+                <div class="form-group">
+                    <label for="adjustmentReason">Reason</label>
+                    <textarea id="adjustmentReason" placeholder="Enter reason for adjustment" required></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeModal('stockAdjustmentModal')">Cancel</button>
+                    <button type="submit" class="btn-primary">Adjust Stock</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="userModal" class="modal hidden">
+        <div class="modal-content">
+            <h3 id="userModalTitle">Add New User</h3>
+            <form id="userForm">
+                <div class="form-group">
+                    <label for="userName">Username *</label>
+                    <input type="text" id="userName" required minlength="3" maxlength="20">
+                    <small>Must be at least 3 characters long</small>
+                </div>
+                <div class="form-group">
+                    <label for="userPin">PIN *</label>
+                    <input type="password" id="userPin" required pattern="\d{4}" maxlength="4" placeholder="0000">
+                    <small id="pinHelp">Must be exactly 4 digits</small>
+                </div>
+                <div class="form-group">
+                    <label for="userRole">Role *</label>
+                    <select id="userRole" required>
+                        <option value="">Select Role</option>
+                        <option value="cashier">Cashier</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                    <small>Admin can manage everything, Cashier can only use POS</small>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="btn-primary">Create User</button>
+                    <button type="button" class="btn-secondary" id="cancelUserBtn">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bulk Upload Modal -->
+    <div id="bulkUploadModal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Bulk Product Upload</h3>
+            <div class="bulk-upload-content">
+                <div class="upload-instructions">
+                    <h4>Instructions:</h4>
+                    <ul>
+                        <li>Download the CSV template first</li>
+                        <li>Fill in your product data following the format</li>
+                        <li>Required columns: product_name, category, selling_price</li>
+                        <li>Optional columns: barcode, purchase_price, stock_quantity, minimum_stock</li>
+                        <li>Upload the completed CSV file</li>
+                    </ul>
+                </div>
+                
+                <div class="upload-section">
+                    <div class="file-upload-area" id="fileUploadArea">
+                        <input type="file" id="csvFileInput" accept=".csv,.xlsx,.xls" style="display: none;">
+                        <div class="upload-placeholder">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p>Click to select CSV or Excel file or drag and drop</p>
+                            <small>Supports .csv, .xlsx, and .xls files</small>
+                        </div>
+                        <div class="file-info hidden" id="fileInfo">
+                            <i class="fas fa-file-csv"></i>
+                            <span id="fileName"></span>
+                            <button type="button" class="btn-small btn-danger" onclick="clearSelectedFile()">Remove</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="upload-progress hidden" id="uploadProgress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <p id="progressText">Processing...</p>
+                </div>
+
+                <div class="upload-results hidden" id="uploadResults">
+                    <div class="results-summary">
+                        <div class="result-item success">
+                            <span class="result-label">Successful:</span>
+                            <span class="result-value" id="successCount">0</span>
+                        </div>
+                        <div class="result-item error">
+                            <span class="result-label">Failed:</span>
+                            <span class="result-value" id="failedCount">0</span>
+                        </div>
+                    </div>
+                    <div class="error-details" id="errorDetails">
+                        <h4>Errors:</h4>
+                        <div class="error-list" id="errorList"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-actions">
+                <button type="button" class="btn-secondary" onclick="closeBulkUploadModal()">Close</button>
+                                    <button type="button" class="btn-secondary" onclick="downloadCSVTemplate()">Download CSV Template</button>
+                    <button type="button" class="btn-secondary" onclick="downloadTemplate('excel')">Download Excel Template</button>
+                <button type="button" class="btn-primary" id="uploadBtn" onclick="processBulkUpload()" disabled>Upload Products</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html> 

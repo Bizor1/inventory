@@ -1,0 +1,280 @@
+# DOMINAK 757 BUSINESS CENTRE - OFFLINE INVENTORY MANAGEMENT SYSTEM
+## Project Context and Requirements Document
+
+### PROJECT OVERVIEW
+**Business Name:** DOMINAK 757 BUSINESS CENTRE
+**Location:** Ghana
+**Business Type:** Wholesale Shop
+**Number Tel** 0549831901
+**System Type:** Fully Offline Inventory Management & POS System
+**Technology Stack:** Electron (100% Offline)
+
+### SYSTEM REQUIREMENTS
+
+#### Core Functionality
+1. **Inventory Management System**
+   - Product catalog management
+   - Stock level tracking
+   - Product categorization
+   - Barcode scanning support
+   - Low stock alerts
+   - Inventory reports
+
+2. **Point of Sale (POS) System**
+   - Sales transaction processing
+   - Receipt generation and printing
+   - Payment processing (cash/card)
+   - Transaction history
+   - Daily sales reports
+
+3. **User Management**
+   - Two-tier user system (Admin/Cashier)
+   - 4-digit PIN authentication
+   - Session management
+   - User activity logging
+
+#### USER ROLES & PERMISSIONS
+
+**ADMIN USER:**
+- Full POS access (can sell and print receipts)
+- View all sales reports and analytics
+- Access inventory management features
+- View system logs and user activities
+- System configuration settings
+- **RESTRICTIONS:** Cannot add new workers, cannot change product prices, cannot bulk add products
+
+**CASHIER USER:**
+- POS access for sales transactions
+- Receipt printing
+- View their own sales history
+- Basic inventory viewing (read-only)
+- **RESTRICTIONS:** Cannot access admin features, cannot modify inventory, cannot access system settings
+
+#### AUTHENTICATION SYSTEM
+- **Method:** 4-digit PIN entry
+- **Security:** Local storage with encryption
+- **Session Management:** Auto-logout after inactivity
+- **PIN Requirements:** Numeric only, exactly 4 digits
+
+### TECHNICAL SPECIFICATIONS
+
+#### Offline Architecture
+- **Database:** Local SQLite database
+- **Data Storage:** All data stored locally on PC
+- **Backup System:** Local backup functionality
+- **Synchronization:** None required (100% offline)
+
+#### Hardware Requirements
+- **Minimum:** Windows 10/11, 4GB RAM, 1GB storage
+- **Recommended:** Windows 11, 8GB RAM, 2GB storage
+- **Peripherals:** Thermal receipt printer, barcode scanner (optional)
+
+#### Receipt Printing
+- **Printer Type:** Thermal receipt printer
+- **Paper Size:** 80mm thermal paper
+- **Print Content:** 
+  - Business header (DOMINAK 757 BUSINESS CENTRE)
+  - Transaction details
+  - Date/time stamp
+  - Cashier identification
+  - Footer with thank you message
+
+### DATABASE SCHEMA
+
+#### Core Tables
+1. **Users Table**
+   - user_id (Primary Key)
+   - username
+   - pin_hash (encrypted)
+   - role (admin/cashier)
+   - created_at
+   - last_login
+   - is_active
+
+2. **Products Table**
+   - product_id (Primary Key)
+   - product_name
+   - category_id
+   - barcode
+   - purchase_price
+   - selling_price
+   - stock_quantity
+   - minimum_stock
+   - created_at
+   - updated_at
+
+3. **Categories Table**
+   - category_id (Primary Key)
+   - category_name
+   - description
+   - created_at
+
+4. **Sales Table**
+   - sale_id (Primary Key)
+   - user_id (Foreign Key)
+   - total_amount
+   - payment_method
+   - sale_date
+   - receipt_number
+
+5. **Sale_Items Table**
+   - item_id (Primary Key)
+   - sale_id (Foreign Key)
+   - product_id (Foreign Key)
+   - quantity
+   - unit_price
+   - total_price
+
+6. **Inventory_Transactions Table**
+   - transaction_id (Primary Key)
+   - product_id (Foreign Key)
+   - transaction_type (sale/adjustment/return)
+   - quantity_change
+   - reference_id
+   - created_at
+
+### USER INTERFACE DESIGN
+
+#### Design Principles
+- **Accessibility:** Large buttons, clear fonts, high contrast
+- **Efficiency:** Minimal clicks to complete tasks
+- **Professional:** Clean, modern interface suitable for business
+- **Responsive:** Optimized for desktop/tablet use
+- **Offline-first:** No network dependency indicators
+
+#### Main Screens
+
+1. **Login Screen**
+   - PIN entry keypad
+   - User role selection
+   - "Forgot PIN" option
+   - System status indicator
+
+2. **POS Dashboard**
+   - Product search/barcode scanning
+   - Shopping cart display
+   - Payment processing
+   - Receipt printing
+   - Quick access to common products
+
+3. **Admin Dashboard**
+   - Sales overview/analytics
+   - Inventory status
+   - User management
+   - System settings
+   - Reports generation
+
+4. **Inventory Management**
+   - Product listing with search/filter
+   - Add/edit/delete products
+   - Category management
+   - Stock level monitoring
+   - Inventory reports
+
+### BUSINESS RULES
+
+#### Inventory Management
+- Products must have unique barcodes
+- Stock levels cannot go negative
+- Low stock alerts at minimum threshold
+- Price changes require admin approval
+- All inventory changes are logged
+
+#### Sales Processing
+- All sales must be associated with a user
+- Receipts must be printed for all transactions
+- Daily sales reports must be generated
+- Transaction history must be maintained
+- Voided transactions require reason codes
+
+#### Security
+- PINs must be exactly 4 digits
+- Failed login attempts are logged
+- Sessions expire after 30 minutes of inactivity
+- All user actions are audited
+- Database is encrypted at rest
+
+### REPORTING REQUIREMENTS
+
+#### Daily Reports
+- Sales summary by user
+- Inventory movements
+- Payment method breakdown
+- Top selling products
+
+#### Weekly Reports
+- Sales trend analysis
+- Inventory turnover
+- User performance metrics
+- Low stock alerts
+
+#### Monthly Reports
+- Profit/loss summary
+- Category-wise sales analysis
+- Inventory valuation
+- User activity summary
+
+### LOCALIZATION CONSIDERATIONS
+- **Language:** English (Ghana standard)
+- **Currency:** Ghana Cedi (GHS)
+- **Date Format:** DD/MM/YYYY
+- **Number Format:** Decimal separator as period
+- **Business Hours:** Configurable
+
+### BACKUP AND RECOVERY
+- **Backup Frequency:** Daily automatic backup
+- **Backup Location:** Local drive + external storage option
+- **Recovery Process:** Database restoration from backup
+- **Data Retention:** Minimum 2 years of transaction history
+
+### PERFORMANCE REQUIREMENTS
+- **Startup Time:** Less than 10 seconds
+- **Transaction Processing:** Less than 2 seconds
+- **Receipt Printing:** Less than 5 seconds
+- **Report Generation:** Less than 30 seconds
+- **Database Queries:** Less than 1 second
+
+### FUTURE ENHANCEMENTS (Post-MVP)
+- Multiple store locations support
+- Advanced analytics and forecasting
+- Mobile app companion
+- Customer loyalty program
+- Supplier management
+- Purchase order management
+
+### DEVELOPMENT PHASES
+
+#### Phase 1: Core POS System
+- Basic user authentication
+- Product management
+- Sales processing
+- Receipt printing
+- Basic reporting
+
+#### Phase 2: Advanced Features
+- Comprehensive inventory management
+- Advanced reporting
+- User management
+- System configuration
+- Backup/restore functionality
+
+#### Phase 3: Optimization
+- Performance improvements
+- UI/UX enhancements
+- Additional report types
+- Advanced security features
+- Comprehensive testing
+
+### TESTING REQUIREMENTS
+- **Unit Testing:** All business logic functions
+- **Integration Testing:** Database operations
+- **User Acceptance Testing:** Real-world scenarios
+- **Performance Testing:** Load and stress testing
+- **Security Testing:** Authentication and authorization
+
+---
+
+**Document Version:** 1.0
+**Last Updated:** [Current Date]
+**Project Status:** In Development
+**Target Completion:** [To be determined] 

@@ -1,0 +1,16 @@
+product_name,category,barcode,purchase_price,selling_price,stock_quantity,minimum_stock
+Coca Cola 350ml,Beverages,1234567890123,1.50,2.50,100,20
+Bread Loaf,Bakery,2345678901234,0.80,1.50,50,10
+Rice 5kg,Groceries,3456789012345,8.00,12.00,30,5
+Cooking Oil 1L,Groceries,4567890123456,3.50,5.50,25,5
+Milk 1L,Dairy,5678901234567,2.00,3.00,40,10
+Eggs 12pcs,Dairy,6789012345678,4.00,6.00,20,5
+Chicken Breast 1kg,Meat,7890123456789,12.00,18.00,15,3
+Tomatoes 1kg,Vegetables,8901234567890,2.50,4.00,35,8
+Onions 1kg,Vegetables,9012345678901,1.80,3.00,40,10
+Detergent Powder,Household,,6.00,9.50,20,5
+Soap Bar,Personal Care,1122334455667,1.20,2.00,60,15
+Toothpaste,Personal Care,2233445566778,2.50,4.00,30,8
+Biscuits Pack,Snacks,3344556677889,1.00,1.80,80,20
+Instant Noodles,Snacks,4455667788990,0.60,1.20,100,25
+Mineral Water 1.5L,Beverages,5566778899001,0.80,1.50,75,15 

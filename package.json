@@ -1,0 +1,56 @@
+{
+  "name": "dominak-757-pos",
+  "version": "1.0.0",
+  "description": "Offline Inventory Management & POS System for DOMINAK 757 BUSINESS CENTRE",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-builder",
+    "build-win": "electron-builder --win",
+    "test": "jest",
+    "setup-data": "node src/database/sampleData.js"
+  },
+  "keywords": [
+    "pos",
+    "inventory",
+    "offline",
+    "electron",
+    "ghana"
+  ],
+  "author": "DOMINAK 757 BUSINESS CENTRE",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^27.0.0",
+    "electron-builder": "^24.6.4",
+    "jest": "^29.7.0"
+  },
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "chart.js": "^4.4.0",
+    "escpos": "^3.0.0-alpha.6",
+    "escpos-usb": "^3.0.0-alpha.4",
+    "jspdf": "^2.5.1",
+    "moment": "^2.29.4",
+    "sqlite3": "^5.1.6",
+    "usb": "^2.15.0",
+    "uuid": "^9.0.1",
+    "xlsx": "^0.18.5"
+  },
+  "build": {
+    "appId": "com.dominak757.pos",
+    "productName": "DOMINAK 757 POS System",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "assets/**/*",
+      "node_modules/**/*"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico"
+    }
+  }
+}
