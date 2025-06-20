@@ -144,6 +144,10 @@ class POSApp {
 
       // Create cells efficiently
       const cells = [
+        `<div class="admin-only">
+          <input type="checkbox" class="product-checkbox" value="${product.product_id}" 
+                 onchange="window.posApp.toggleProductSelection(this, ${product.product_id})">
+        </div>`,
         product.product_name,
         product.category_name || "N/A",
         product.barcode || "N/A",
@@ -825,6 +829,7 @@ class POSApp {
       if (result.success) {
         this.allProducts = result.data;
         this.displayInventory(result.data);
+        this.clearSelection(); // Clear any previous selections
 
         // Test if inventory search input exists after loading
         setTimeout(() => {
@@ -1073,7 +1078,7 @@ class POSApp {
       const pinHelp = document.getElementById("pinHelp");
       if (pinInput && pinHelp) {
         pinInput.required = true;
-        pinInput.placeholder = "0000";
+        pinInput.placeholder = "Enter PIN";
         pinHelp.textContent = "Must be exactly 4 digits";
       }
 
@@ -1986,24 +1991,20 @@ class POSApp {
       this.hideLoadingMessage(loadingMsg);
 
       if (result.success) {
-        this.showSuccessMessage(
-          `✅ ${this.currentReport} report exported successfully!`,
-          `📁 File Name: ${
-            result.data.filename
-          }\n💾 File Size: ${this.formatFileSize(
+        this.showSuccessToast(
+          `${this.currentReport} Report Exported!`,
+          `File: ${result.data.filename} (${this.formatFileSize(
             result.data.file_size
-          )}\n📂 Saved To: ${result.data.export_path}\n📊 Report Type: ${
-            this.currentReport.charAt(0).toUpperCase() +
-            this.currentReport.slice(1)
-          }\n📅 Generated: ${new Date().toLocaleString()}\n\n💡 Open this file in Microsoft Excel to view detailed analytics and charts!`
+          )}) saved to ${result.data.export_path}`,
+          8000
         );
         console.log("✅ Report exported:", result.data);
       } else {
-        this.showErrorMessage(`❌ Export failed: ${result.error}`);
+        this.showErrorToast("Export Failed", result.error);
         console.error("❌ Error exporting report:", result.error);
       }
     } catch (error) {
-      this.showErrorMessage(`❌ Export error: ${error.message}`);
+      this.showErrorToast("Export Error", error.message);
       console.error("❌ Error exporting report:", error);
     }
   }
@@ -2066,8 +2067,8 @@ class POSApp {
       this.hideLoadingMessage(loadingMsg);
 
       if (result.success) {
-        this.showSuccessMessage(
-          "✅ Settings saved successfully!",
+        this.showSuccessToast(
+          "Settings Saved!",
           "Your business settings have been updated and will take effect immediately."
         );
         console.log("✅ Settings saved successfully");
@@ -2075,11 +2076,11 @@ class POSApp {
         // Refresh system info
         await this.loadSettings();
       } else {
-        this.showErrorMessage(`❌ Failed to save settings: ${result.error}`);
+        this.showErrorToast("Failed to Save Settings", result.error);
         console.error("❌ Error saving settings:", result.error);
       }
     } catch (error) {
-      this.showErrorMessage(`❌ Settings error: ${error.message}`);
+      this.showErrorToast("Settings Error", error.message);
       console.error("❌ Error saving settings:", error);
     }
   }
@@ -2095,25 +2096,18 @@ class POSApp {
       this.hideLoadingMessage(loadingMsg);
 
       if (result.success) {
-        this.showSuccessMessage(
-          "✅ Database backup created successfully!",
-          `📁 Backup File: ${result.data.backup_filename}\n💾 File Size: ${
-            result.data.backup_size
-          }\n📂 Saved To: ${
-            result.data.backup_path
-          }\n📄 Info File: ${result.data.info_file
-            .split("\\")
-            .pop()
-            .split("/")
-            .pop()}\n\n💡 Keep this backup file safe! You can restore your data anytime using the restore option in settings.`
+        this.showSuccessToast(
+          "Backup Created Successfully!",
+          `File: ${result.data.backup_filename} (${result.data.backup_size}) saved to ${result.data.backup_path}`,
+          8000
         );
         console.log("✅ Backup created:", result.data);
       } else {
-        this.showErrorMessage(`❌ Backup failed: ${result.error}`);
+        this.showErrorToast("Backup Failed", result.error);
         console.error("❌ Error creating backup:", result.error);
       }
     } catch (error) {
-      this.showErrorMessage(`❌ Backup error: ${error.message}`);
+      this.showErrorToast("Backup Error", error.message);
       console.error("❌ Error creating backup:", error);
     }
   }
@@ -2180,23 +2174,22 @@ class POSApp {
       this.hideLoadingMessage(loadingMsg);
 
       if (result.success) {
-        this.showSuccessMessage(
-          `✅ ${type} data exported successfully!`,
-          `📁 File Name: ${result.data.filename}\n📊 Records Exported: ${
+        this.showSuccessToast(
+          `${type} Data Exported!`,
+          `File: ${result.data.filename} (${
             result.data.record_count
-          }\n💾 File Size: ${this.formatFileSize(
-            result.data.file_size
-          )}\n📂 Saved To: ${
+          } records, ${this.formatFileSize(result.data.file_size)}) saved to ${
             result.data.export_path
-          }\n\n💡 You can now open this file in Microsoft Excel or Google Sheets!`
+          }`,
+          8000
         );
         console.log("✅ Data exported:", result.data);
       } else {
-        this.showErrorMessage(`❌ Export failed: ${result.error}`);
+        this.showErrorToast("Export Failed", result.error);
         console.error("❌ Error exporting data:", result.error);
       }
     } catch (error) {
-      this.showErrorMessage(`❌ Export error: ${error.message}`);
+      this.showErrorToast("Export Error", error.message);
       console.error("❌ Error exporting data:", error);
     }
   }
@@ -2218,60 +2211,6 @@ class POSApp {
     if (loadingElement && loadingElement.parentNode) {
       loadingElement.parentNode.removeChild(loadingElement);
     }
-  }
-
-  showSuccessMessage(title, details) {
-    const modal = document.createElement("div");
-    modal.className = "modal";
-    modal.innerHTML = `
-      <div class="modal-content">
-        <h3 style="color: #27ae60;">${title}</h3>
-        <pre style="background: #f8f9fa; padding: 15px; border-radius: 8px; white-space: pre-wrap;">${details}</pre>
-        <div class="modal-actions">
-          <button class="btn-primary close-success-modal">OK</button>
-        </div>
-      </div>
-    `;
-
-    document.body.appendChild(modal);
-
-    modal
-      .querySelector(".close-success-modal")
-      .addEventListener("click", () => {
-        document.body.removeChild(modal);
-      });
-
-    modal.addEventListener("click", (e) => {
-      if (e.target === modal) {
-        document.body.removeChild(modal);
-      }
-    });
-  }
-
-  showErrorMessage(message) {
-    const modal = document.createElement("div");
-    modal.className = "modal";
-    modal.innerHTML = `
-      <div class="modal-content">
-        <h3 style="color: #e74c3c;">Error</h3>
-        <p>${message}</p>
-        <div class="modal-actions">
-          <button class="btn-primary close-error-modal">OK</button>
-        </div>
-      </div>
-    `;
-
-    document.body.appendChild(modal);
-
-    modal.querySelector(".close-error-modal").addEventListener("click", () => {
-      document.body.removeChild(modal);
-    });
-
-    modal.addEventListener("click", (e) => {
-      if (e.target === modal) {
-        document.body.removeChild(modal);
-      }
-    });
   }
 
   // Utility function to format file sizes
@@ -2634,7 +2573,14 @@ class POSApp {
   }
 
   async handleCheckout() {
-    if (this.cart.length === 0 || !this.currentUser) return;
+    if (this.cart.length === 0) {
+      this.showWarningToast(
+        "Empty Cart",
+        "Please add items to cart before checkout"
+      );
+      return;
+    }
+    if (!this.currentUser) return;
 
     const total = this.cart.reduce((sum, item) => sum + item.total_price, 0);
 
@@ -2662,6 +2608,10 @@ class POSApp {
         }
 
         console.log("✅ Sale completed! Receipt:", result.data.receipt_number);
+        this.showSuccessToast(
+          "Sale Completed!",
+          `Receipt #${result.data.receipt_number} - GHS ${total.toFixed(2)}`
+        );
         this.cart = [];
         this.updateCart();
 
@@ -2670,11 +2620,283 @@ class POSApp {
         await this.loadTodaySales();
       } else {
         console.error("❌ Sale failed:", result.error);
+        this.showErrorToast("Sale Failed", result.error || "Please try again");
       }
     } catch (error) {
       console.error("Checkout error:", error);
-      console.error("❌ Checkout failed. Please try again.");
+      this.showErrorToast("Checkout Error", "Please try again");
     }
+  }
+
+  // Bulk Selection and Deletion Functions
+  toggleSelectAll() {
+    const selectAllCheckbox = document.getElementById("selectAll");
+    const productCheckboxes = document.querySelectorAll(".product-checkbox");
+
+    productCheckboxes.forEach((checkbox) => {
+      checkbox.checked = selectAllCheckbox.checked;
+      const row = checkbox.closest("tr");
+      if (selectAllCheckbox.checked) {
+        row.classList.add("selected");
+      } else {
+        row.classList.remove("selected");
+      }
+    });
+
+    this.updateBulkActionsVisibility();
+  }
+
+  toggleProductSelection(checkbox, productId) {
+    const row = checkbox.closest("tr");
+    if (checkbox.checked) {
+      row.classList.add("selected");
+    } else {
+      row.classList.remove("selected");
+    }
+
+    // Update select all checkbox
+    const selectAllCheckbox = document.getElementById("selectAll");
+    const productCheckboxes = document.querySelectorAll(".product-checkbox");
+    const checkedBoxes = document.querySelectorAll(".product-checkbox:checked");
+
+    selectAllCheckbox.checked =
+      checkedBoxes.length === productCheckboxes.length;
+    selectAllCheckbox.indeterminate =
+      checkedBoxes.length > 0 && checkedBoxes.length < productCheckboxes.length;
+
+    this.updateBulkActionsVisibility();
+  }
+
+  updateBulkActionsVisibility() {
+    const checkedBoxes = document.querySelectorAll(".product-checkbox:checked");
+    const bulkActions = document.getElementById("bulkActions");
+    const selectedCount = document.getElementById("selectedCount");
+
+    if (checkedBoxes.length > 0) {
+      bulkActions.classList.remove("hidden");
+      selectedCount.textContent = checkedBoxes.length;
+    } else {
+      bulkActions.classList.add("hidden");
+    }
+  }
+
+  clearSelection() {
+    const selectAllCheckbox = document.getElementById("selectAll");
+    const productCheckboxes = document.querySelectorAll(".product-checkbox");
+    const bulkActions = document.getElementById("bulkActions");
+
+    if (selectAllCheckbox) selectAllCheckbox.checked = false;
+
+    productCheckboxes.forEach((checkbox) => {
+      checkbox.checked = false;
+      const row = checkbox.closest("tr");
+      row.classList.remove("selected");
+    });
+
+    if (bulkActions) bulkActions.classList.add("hidden");
+  }
+
+  async bulkDeleteProducts() {
+    const checkedBoxes = document.querySelectorAll(".product-checkbox:checked");
+
+    if (checkedBoxes.length === 0) {
+      this.showWarningToast(
+        "No Selection",
+        "Please select products to delete first"
+      );
+      return;
+    }
+
+    const productIds = Array.from(checkedBoxes).map((checkbox) =>
+      parseInt(checkbox.value)
+    );
+    const productNames = Array.from(checkedBoxes).map((checkbox) => {
+      const row = checkbox.closest("tr");
+      return row.querySelector("td:nth-child(3)").textContent; // Product name column (accounting for checkbox column)
+    });
+
+    // Show confirmation dialog
+    const confirmed = await this.showConfirmDialog(
+      "Bulk Delete Confirmation",
+      `Are you sure you want to delete ${productIds.length} selected products?`,
+      `Products to be deleted:\n${productNames.slice(0, 5).join("\n")}` +
+        `${
+          productNames.length > 5
+            ? `\n... and ${productNames.length - 5} more`
+            : ""
+        }\n\n` +
+        `⚠️ THIS ACTION CANNOT BE UNDONE!`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    // Show loading state
+    const loadingMsg = this.showLoadingMessage(
+      `Deleting ${productIds.length} products...`
+    );
+
+    try {
+      let successCount = 0;
+      let errorCount = 0;
+      const errors = [];
+
+      // Delete products one by one
+      for (const productId of productIds) {
+        try {
+          const result = await window.electronAPI.inventory.deleteProduct(
+            productId
+          );
+          if (result.success) {
+            successCount++;
+          } else {
+            errorCount++;
+            errors.push(`Product ID ${productId}: ${result.error}`);
+          }
+        } catch (error) {
+          errorCount++;
+          errors.push(`Product ID ${productId}: ${error.message}`);
+        }
+      }
+
+      // Hide loading
+      this.hideLoadingMessage(loadingMsg);
+
+      // Show results
+      if (successCount > 0) {
+        // Reload inventory to reflect changes
+        await this.loadInventory();
+        await this.loadProducts(); // Refresh POS products too
+      }
+
+      if (errorCount === 0) {
+        this.showSuccessToast(
+          "Bulk Deletion Successful!",
+          `Successfully deleted ${successCount} products. Inventory refreshed.`
+        );
+      } else {
+        this.showWarningToast(
+          "Bulk Deletion Completed",
+          `${successCount} products deleted, ${errorCount} failed. Check console for details.`,
+          8000
+        );
+        console.error("Deletion errors:", errors);
+      }
+    } catch (error) {
+      this.hideLoadingMessage(loadingMsg);
+      this.showErrorToast(
+        "Deletion Failed",
+        `Bulk deletion failed: ${error.message}`
+      );
+      console.error("Bulk deletion error:", error);
+    }
+  }
+
+  // Modal and Toast System
+  showConfirmDialog(title, message, details = "") {
+    return new Promise((resolve) => {
+      const modal = document.getElementById("confirmModal");
+      const titleEl = document.getElementById("confirmTitle");
+      const messageEl = document.getElementById("confirmMessage");
+      const detailsEl = document.getElementById("confirmDetails");
+      const cancelBtn = document.getElementById("confirmCancelBtn");
+      const okBtn = document.getElementById("confirmOkBtn");
+
+      titleEl.textContent = title;
+      messageEl.textContent = message;
+
+      if (details) {
+        detailsEl.textContent = details;
+        detailsEl.style.display = "block";
+      } else {
+        detailsEl.style.display = "none";
+      }
+
+      modal.classList.remove("hidden");
+
+      const handleCancel = () => {
+        modal.classList.add("hidden");
+        cancelBtn.removeEventListener("click", handleCancel);
+        okBtn.removeEventListener("click", handleOk);
+        resolve(false);
+      };
+
+      const handleOk = () => {
+        modal.classList.add("hidden");
+        cancelBtn.removeEventListener("click", handleCancel);
+        okBtn.removeEventListener("click", handleOk);
+        resolve(true);
+      };
+
+      cancelBtn.addEventListener("click", handleCancel);
+      okBtn.addEventListener("click", handleOk);
+    });
+  }
+
+  showToast(type, title, message, duration = 5000) {
+    const container = document.getElementById("toastContainer");
+    const toast = document.createElement("div");
+    toast.className = `toast ${type}`;
+
+    const icons = {
+      success: "fas fa-check-circle",
+      error: "fas fa-exclamation-circle",
+      warning: "fas fa-exclamation-triangle",
+      info: "fas fa-info-circle",
+    };
+
+    toast.innerHTML = `
+      <button class="toast-close">&times;</button>
+      <div class="toast-header">
+        <i class="${icons[type]}"></i>
+        <span>${title}</span>
+      </div>
+      <div class="toast-body">${message}</div>
+    `;
+
+    container.appendChild(toast);
+
+    // Show toast with animation
+    setTimeout(() => toast.classList.add("show"), 100);
+
+    // Auto remove
+    const autoRemove = setTimeout(() => this.removeToast(toast), duration);
+
+    // Manual close
+    const closeBtn = toast.querySelector(".toast-close");
+    closeBtn.addEventListener("click", () => {
+      clearTimeout(autoRemove);
+      this.removeToast(toast);
+    });
+
+    return toast;
+  }
+
+  removeToast(toast) {
+    toast.classList.remove("show");
+    setTimeout(() => {
+      if (toast.parentNode) {
+        toast.parentNode.removeChild(toast);
+      }
+    }, 300);
+  }
+
+  // Convenience methods for different toast types
+  showSuccessToast(title, message, duration) {
+    return this.showToast("success", title, message, duration);
+  }
+
+  showErrorToast(title, message, duration) {
+    return this.showToast("error", title, message, duration);
+  }
+
+  showWarningToast(title, message, duration) {
+    return this.showToast("warning", title, message, duration);
+  }
+
+  showInfoToast(title, message, duration) {
+    return this.showToast("info", title, message, duration);
   }
 }
 
@@ -2989,4 +3211,9 @@ document.addEventListener("DOMContentLoaded", () => {
   window.processBulkUpload = processBulkUpload;
   window.handleFileSelection = handleFileSelection;
   window.clearSelectedFile = clearSelectedFile;
+
+  // Bulk operations functions
+  window.toggleSelectAll = () => posApp.toggleSelectAll();
+  window.bulkDeleteProducts = () => posApp.bulkDeleteProducts();
+  window.clearSelection = () => posApp.clearSelection();
 });

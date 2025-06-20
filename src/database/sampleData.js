@@ -201,8 +201,7 @@ async function insertSampleData() {
 
     console.log("Sample data insertion completed!");
     console.log("\nDefault Login Credentials:");
-    console.log("Admin - PIN: 1234");
-    console.log("Cashier - PIN: 0000");
+    console.log("Default users created successfully");
   } catch (error) {
     console.error("Error inserting sample data:", error);
   } finally {

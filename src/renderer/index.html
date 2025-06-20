@@ -17,9 +17,6 @@
             <input type="password" id="pinInput" maxlength="4" placeholder="Enter 4-digit PIN">
             <button id="loginBtn">Login</button>
             <div class="login-error hidden" id="loginError">Invalid PIN</div>
-            <div class="login-help">
-                <small>Default PINs: Admin = 1234, Cashier = 0000</small>
-            </div>
         </div>
     </div>
 
@@ -159,6 +156,20 @@
                     </div>
                 </div>
 
+                <div class="bulk-actions hidden" id="bulkActions">
+                    <div class="bulk-actions-info">
+                        <span id="selectedCount">0</span> items selected
+                    </div>
+                    <div class="bulk-actions-buttons">
+                        <button class="btn-danger admin-only" onclick="bulkDeleteProducts()">
+                            <i class="fas fa-trash"></i> Delete Selected
+                        </button>
+                        <button class="btn-secondary" onclick="clearSelection()">
+                            <i class="fas fa-times"></i> Clear Selection
+                        </button>
+                    </div>
+                </div>
+
                 <div class="inventory-filters">
                     <input type="text" id="inventorySearch" placeholder="Search products...">
                     <select id="categoryFilter">
@@ -175,6 +186,9 @@
                     <table id="inventoryTable" class="data-table">
                         <thead>
                             <tr>
+                                <th class="admin-only">
+                                    <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                                </th>
                                 <th>Product</th>
                                 <th>Category</th>
                                 <th>Barcode</th>
@@ -444,7 +458,7 @@
                 </div>
                 <div class="form-group">
                     <label for="userPin">PIN *</label>
-                    <input type="password" id="userPin" required pattern="\d{4}" maxlength="4" placeholder="0000">
+                                            <input type="password" id="userPin" required pattern="\d{4}" maxlength="4" placeholder="Enter 4-digit PIN">
                     <small id="pinHelp">Must be exactly 4 digits</small>
                 </div>
                 <div class="form-group">
@@ -529,6 +543,27 @@
             </div>
         </div>
     </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="modal hidden">
+        <div class="modal-content confirmation-modal">
+            <div class="confirmation-header">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h3 id="confirmTitle">Confirm Action</h3>
+            </div>
+            <div class="confirmation-body">
+                <p id="confirmMessage">Are you sure you want to proceed?</p>
+                <div id="confirmDetails" class="confirmation-details"></div>
+            </div>
+            <div class="confirmation-actions">
+                <button id="confirmCancelBtn" class="btn-secondary">Cancel</button>
+                <button id="confirmOkBtn" class="btn-danger">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="toast-container"></div>
 
     <script src="js/app.js"></script>
 </body>

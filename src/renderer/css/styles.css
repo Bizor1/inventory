@@ -1760,4 +1760,231 @@ body {
 .text-success {
   color: #27ae60 !important;
   font-weight: bold;
+}
+
+/* Bulk Actions */
+.bulk-actions {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.bulk-actions-info {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.bulk-actions-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.bulk-actions-buttons .btn-danger,
+.bulk-actions-buttons .btn-secondary {
+  margin: 0;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+}
+
+.bulk-actions-buttons .btn-danger {
+  background: #e74c3c;
+  border-color: #c0392b;
+}
+
+.bulk-actions-buttons .btn-danger:hover {
+  background: #c0392b;
+  transform: translateY(-2px);
+}
+
+.bulk-actions-buttons .btn-secondary {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: white;
+}
+
+.bulk-actions-buttons .btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+/* Checkbox styling */
+.data-table input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--primary-color);
+}
+
+.data-table tr.selected {
+  background-color: rgba(102, 126, 234, 0.1) !important;
+  border-left: 4px solid var(--primary-color);
+}
+
+.data-table tr.selected:hover {
+  background-color: rgba(102, 126, 234, 0.15) !important;
+}
+
+/* Confirmation Modal */
+.confirmation-modal {
+  max-width: 500px;
+  text-align: center;
+}
+
+.confirmation-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, #f39c12 0%, #e74c3c 100%);
+  color: white;
+  border-radius: 8px 8px 0 0;
+  margin: -1rem -1rem 1rem -1rem;
+}
+
+.confirmation-header i {
+  font-size: 1.5rem;
+}
+
+.confirmation-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.confirmation-body {
+  margin-bottom: 2rem;
+  text-align: left;
+}
+
+.confirmation-details {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-top: 1rem;
+  border-left: 4px solid #e74c3c;
+  font-family: monospace;
+  font-size: 0.9rem;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.confirmation-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.confirmation-actions .btn-secondary,
+.confirmation-actions .btn-danger {
+  min-width: 100px;
+  padding: 0.75rem 1.5rem;
+}
+
+/* Toast Notifications */
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.toast {
+  background: white;
+  border-radius: 8px;
+  padding: 1rem 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-left: 4px solid;
+  max-width: 400px;
+  opacity: 0;
+  transform: translateX(100%);
+  transition: all 0.3s ease;
+  pointer-events: auto;
+  position: relative;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.toast.success {
+  border-left-color: #27ae60;
+}
+
+.toast.error {
+  border-left-color: #e74c3c;
+}
+
+.toast.warning {
+  border-left-color: #f39c12;
+}
+
+.toast.info {
+  border-left-color: #3498db;
+}
+
+.toast-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.toast-header i {
+  font-size: 1.1rem;
+}
+
+.toast.success .toast-header i {
+  color: #27ae60;
+}
+
+.toast.error .toast-header i {
+  color: #e74c3c;
+}
+
+.toast.warning .toast-header i {
+  color: #f39c12;
+}
+
+.toast.info .toast-header i {
+  color: #3498db;
+}
+
+.toast-body {
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: #666;
+}
+
+.toast-close {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  color: #999;
+  cursor: pointer;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toast-close:hover {
+  color: #666;
 } 
