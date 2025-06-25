@@ -1,0 +1,103 @@
+===============================================
+DOMINAK 757 BUSINESS CENTRE - CLIENT SETUP
+===============================================
+Version: 1.0.1 (With Pagination & Enhanced Features)
+Date: June 21, 2025
+
+IMPORTANT SETUP INSTRUCTIONS:
+============================
+
+1. CREATE FOLDER STRUCTURE:
+   - Create folder: C:\Users\USER\Desktop\try\
+   - Inside that folder, create: C:\Users\USER\Desktop\try\data\
+
+2. COPY FILES:
+   - Copy the "data" folder from this CLIENT_PACKAGE to: C:\Users\USER\Desktop\try\data\
+   - The database file should be at: C:\Users\USER\Desktop\try\data\dominak757.db
+
+3. RUN THE APPLICATION:
+   - Run "DOMINAK 757 POS System 1.0.1 - CLIENT.exe" from anywhere on your computer
+   - The app will automatically find the database at the specified location
+
+LOGIN CREDENTIALS:
+==================
+- Admin PIN: 1234
+- Cashier PIN: 0000
+
+NEW FEATURES IN VERSION 1.0.1:
+==============================
+✅ PAGINATION SYSTEM:
+   - Inventory now shows 50 products per page (instead of all at once)
+   - Navigation: First, Previous, Next, Last buttons
+   - Page numbers with smart ellipsis for large datasets
+   - Items per page options: 20, 50, 100, or "All"
+   - Shows "Showing X - Y of Z products" information
+
+✅ ENHANCED SEARCH & FILTERING:
+   - Search works across ALL products in database
+   - Pagination resets to page 1 when searching/filtering
+   - Much faster performance with large product catalogs
+
+✅ IMPROVED PERFORMANCE:
+   - Only renders current page products (not all 190+ at once)
+   - Smoother scrolling and faster loading
+   - Better memory usage with large inventories
+
+✅ MOBILE-FRIENDLY PAGINATION:
+   - Responsive design that works on all screen sizes
+   - Pagination controls adapt to mobile devices
+
+CURRENT DATABASE CONTENTS:
+=========================
+- 190+ Products across multiple categories
+- Complete sales history and transactions
+- User accounts and settings
+- All business data transferred
+
+FEATURES INCLUDED:
+==================
+✅ Complete POS System
+✅ Inventory Management with Pagination
+✅ Sales Tracking & Reporting
+✅ Automatic Receipt Printing
+✅ User Management (Admin/Cashier)
+✅ Excel Export Functionality
+✅ Bulk Product Upload
+✅ Stock Management
+✅ Category Management
+✅ Professional UI with Animations
+
+TESTING CHECKLIST:
+==================
+□ App launches without errors
+□ Login with both Admin (1234) and Cashier (0000) PINs
+□ Navigate to Inventory section
+□ Verify pagination controls appear at bottom
+□ Test page navigation (First, Previous, Next, Last)
+□ Try different "Items per page" settings
+□ Test search functionality with pagination
+□ Verify all 190+ products are accessible
+□ Test adding new products
+□ Test making sales and printing receipts
+□ Verify data persists after closing/reopening app
+
+TROUBLESHOOTING:
+===============
+- If app doesn't find database: Ensure folder structure is exactly as specified
+- If pagination doesn't work: Check that you're using the correct CLIENT version
+- If data is missing: Verify database file was copied correctly
+- For any issues: Check that the path C:\Users\USER\Desktop\try\data\ exists
+
+SUPPORT:
+========
+This is a fully functional POS system with professional pagination
+and enhanced performance for managing large product inventories.
+
+The pagination system makes it easy to navigate through hundreds
+of products without performance issues.
+
+===============================================
+Ready for Production Use - June 21, 2025
+===============================================
+
+© 2025 DOMINAK 757 BUSINESS CENTRE 

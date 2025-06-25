@@ -46,6 +46,7 @@ class SalesService {
         );
 
         const saleId = saleResult.id;
+        console.log("💾 Sale created with ID:", saleId, "Receipt:", receiptNumber);
 
         // Process each item
         for (const item of items) {
@@ -504,6 +505,74 @@ class SalesService {
       }
     } catch (error) {
       console.error("Void sale error:", error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async deleteSale(saleId) {
+    try {
+      // Check if sale exists
+      const sale = await this.db.getQuery(
+        "SELECT * FROM sales WHERE sale_id = ?",
+        [saleId]
+      );
+
+      if (!sale) {
+        return { success: false, error: "Sale not found" };
+      }
+
+      // Get sale items to restore stock
+      const saleItems = await this.db.allQuery(
+        "SELECT * FROM sale_items WHERE sale_id = ?",
+        [saleId]
+      );
+
+      await this.db.beginTransaction();
+
+      try {
+        // Restore stock for each item
+        for (const item of saleItems) {
+          if (this.inventoryService) {
+            await this.inventoryService.adjustStock(
+              item.product_id,
+              item.quantity,
+              `Sale deleted - stock restored`
+            );
+          }
+
+          // Remove inventory transaction for this sale
+          await this.db.runQuery(
+            "DELETE FROM inventory_transactions WHERE reference_id = ? AND transaction_type = 'sale'",
+            [saleId]
+          );
+        }
+
+        // Delete sale items first (foreign key constraint)
+        await this.db.runQuery("DELETE FROM sale_items WHERE sale_id = ?", [
+          saleId,
+        ]);
+
+        // Delete the sale record
+        await this.db.runQuery("DELETE FROM sales WHERE sale_id = ?", [
+          saleId,
+        ]);
+
+        await this.db.commitTransaction();
+
+        return {
+          success: true,
+          message: "Sale deleted successfully",
+          data: { 
+            deleted_sale_id: saleId,
+            restored_amount: sale.total_amount 
+          },
+        };
+      } catch (error) {
+        await this.db.rollbackTransaction();
+        throw error;
+      }
+    } catch (error) {
+      console.error("Delete sale error:", error);
       return { success: false, error: error.message };
     }
   }

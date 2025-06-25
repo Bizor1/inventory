@@ -57,6 +57,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
       ipcRenderer.invoke("sales:getSalesByUser", userId, filters),
     voidSale: (saleId, reason) =>
       ipcRenderer.invoke("sales:voidSale", saleId, reason),
+    deleteSale: (saleId) =>
+      ipcRenderer.invoke("sales:deleteSale", saleId),
   },
 
   // User management methods

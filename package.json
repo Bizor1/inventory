@@ -1,6 +1,6 @@
 {
   "name": "dominak-757-pos",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Offline Inventory Management & POS System for DOMINAK 757 BUSINESS CENTRE",
   "main": "src/main.js",
   "scripts": {
@@ -8,8 +8,14 @@
     "dev": "electron . --dev",
     "build": "electron-builder",
     "build-win": "electron-builder --win",
+    "build-win-portable": "electron-builder --win portable",
+    "build-win-installer": "electron-builder --win nsis",
+    "build-all": "electron-builder --win --mac --linux",
+    "dist": "npm run build-win-installer",
+    "pack": "electron-builder --dir",
     "test": "jest",
-    "setup-data": "node src/database/sampleData.js"
+    "setup-data": "node src/database/sampleData.js",
+    "postinstall": "electron-builder install-app-deps"
   },
   "keywords": [
     "pos",
@@ -23,17 +29,15 @@
   "devDependencies": {
     "electron": "^27.0.0",
     "electron-builder": "^24.6.4",
+    "electron-icon-builder": "^2.0.1",
     "jest": "^29.7.0"
   },
   "dependencies": {
-    "bcrypt": "^5.1.1",
+    "bcryptjs": "^2.4.3",
     "chart.js": "^4.4.0",
-    "escpos": "^3.0.0-alpha.6",
-    "escpos-usb": "^3.0.0-alpha.4",
     "jspdf": "^2.5.1",
     "moment": "^2.29.4",
-    "sqlite3": "^5.1.6",
-    "usb": "^2.15.0",
+    "sql.js": "^1.8.0",
     "uuid": "^9.0.1",
     "xlsx": "^0.18.5"
   },
@@ -41,16 +45,69 @@
     "appId": "com.dominak757.pos",
     "productName": "DOMINAK 757 POS System",
     "directories": {
-      "output": "dist"
+      "output": "dist",
+      "buildResources": "assets"
     },
     "files": [
       "src/**/*",
       "assets/**/*",
-      "node_modules/**/*"
+      "node_modules/**/*",
+      "!node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
+      "!node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
+      "!node_modules/*.d.ts",
+      "!node_modules/.bin",
+      "!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}",
+      "!.editorconfig",
+      "!**/._*",
+      "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}",
+      "!**/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}",
+      "!**/{appveyor.yml,.travis.yml,circle.yml}",
+      "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}"
     ],
     "win": {
-      "target": "nsis",
-      "icon": "assets/icon.ico"
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64",
+            "ia32"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.ico",
+      "publisherName": "DOMINAK 757 BUSINESS CENTRE",
+      "verifyUpdateCodeSignature": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "DOMINAK 757 POS"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "assets/icon.icns",
+      "category": "public.app-category.business"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "icon": "assets/icon.png",
+      "category": "Office"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "Bizor1",
+      "repo": "inventory"
     }
   }
 }

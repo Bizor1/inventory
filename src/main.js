@@ -22,7 +22,11 @@ class MainApp {
   async initializeApp() {
     await app.whenReady();
 
-    // Initialize database
+    console.log("🏠 Process working directory:", process.cwd());
+    console.log("🏠 Executable path:", process.execPath);
+    console.log("📦 App is packaged:", app.isPackaged);
+
+    // Initialize database - back to working version
     this.db = new DatabaseManager();
     await this.db.initialize();
 
@@ -44,8 +48,14 @@ class MainApp {
     // Handle app events
     app.on("window-all-closed", () => {
       if (process.platform !== "darwin") {
+        this.shutdown();
         app.quit();
       }
+    });
+
+    app.on("before-quit", () => {
+      console.log("🔄 App is quitting, saving database...");
+      this.shutdown();
     });
 
     app.on("activate", () => {
@@ -88,6 +98,20 @@ class MainApp {
     this.mainWindow.on("closed", () => {
       this.mainWindow = null;
     });
+  }
+
+  shutdown() {
+    console.log("🔄 Shutting down application...");
+    if (this.db) {
+      try {
+        console.log("💾 Saving database before shutdown...");
+        this.db.saveDatabase();
+        this.db.close();
+        console.log("✅ Database saved and closed successfully");
+      } catch (error) {
+        console.error("❌ Error during database shutdown:", error);
+      }
+    }
   }
 
   setupIpcHandlers() {
@@ -339,6 +363,15 @@ class MainApp {
         return await this.services.sales.voidSale(saleId, reason);
       } catch (error) {
         console.error("Void sale error:", error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    ipcMain.handle("sales:deleteSale", async (event, saleId) => {
+      try {
+        return await this.services.sales.deleteSale(saleId);
+      } catch (error) {
+        console.error("Delete sale error:", error);
         return { success: false, error: error.message };
       }
     });

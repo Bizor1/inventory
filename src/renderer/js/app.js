@@ -18,6 +18,15 @@ class POSApp {
       totalPages: 1,
     };
 
+    // Pagination configuration
+    this.pagination = {
+      currentPage: 1,
+      itemsPerPage: 50,
+      totalItems: 0,
+      totalPages: 0,
+      filteredProducts: []
+    };
+
     // Performance optimization flags
     this.isRendering = false;
     this.pendingRenderRequests = new Set();
@@ -217,26 +226,41 @@ class POSApp {
     }
 
     console.log(
-      `Rendering ${products.length} products with chunked rendering...`
+      `Rendering ${products.length} products...`
     );
 
-    // Use chunked rendering for better performance
+    // Clear existing content
+    grid.innerHTML = "";
+
+    // Use chunked rendering for better performance but show ALL products
     await this.renderInChunks(
       products,
       this.createProductCards.bind(this),
       grid,
-      this.virtualScrollConfig.itemsPerChunk
+      50 // Larger chunk size for better performance
     );
 
     // Setup event delegation for product cards
     this.setupProductCardEvents(grid);
 
-    console.log("Product rendering completed - UI should remain responsive");
+    console.log("Product rendering completed - showing all products");
   }
 
   async displayInventory(products) {
-    console.log("=== displayInventory called with chunked rendering ===");
-    console.log(`Rendering ${products.length} products...`);
+    console.log("=== displayInventory called ===");
+    console.log(`Total products for pagination: ${products.length}`);
+
+    // Store filtered products for pagination
+    this.pagination.filteredProducts = products;
+    this.pagination.totalItems = products.length;
+    this.pagination.totalPages = Math.ceil(products.length / this.pagination.itemsPerPage);
+
+    // Get current page products
+    const startIndex = (this.pagination.currentPage - 1) * this.pagination.itemsPerPage;
+    const endIndex = startIndex + this.pagination.itemsPerPage;
+    const currentPageProducts = products.slice(startIndex, endIndex);
+
+    console.log(`Rendering page ${this.pagination.currentPage}: ${currentPageProducts.length} products (${startIndex + 1}-${Math.min(endIndex, products.length)} of ${products.length})`);
 
     const tbody = document.querySelector("#inventoryTable tbody");
     if (!tbody) {
@@ -244,18 +268,159 @@ class POSApp {
       return;
     }
 
-    // Use chunked rendering for inventory table
+    // Clear existing content
+    tbody.innerHTML = "";
+
+    // Render current page products
     await this.renderInChunks(
-      products,
+      currentPageProducts,
       this.createInventoryRows.bind(this),
       tbody,
-      this.virtualScrollConfig.itemsPerChunk
+      50 // Larger chunk size for better performance
     );
 
     // Setup event delegation for inventory actions
     this.setupInventoryEvents(tbody);
 
-    console.log("Inventory rendering completed - UI should remain responsive");
+    // Update pagination controls
+    this.updatePaginationControls();
+
+    console.log("Inventory rendering completed with pagination");
+  }
+
+  // Update pagination controls
+  updatePaginationControls() {
+    const paginationInfo = document.getElementById('paginationInfo');
+    const pageNumbers = document.getElementById('pageNumbers');
+    const firstPageBtn = document.getElementById('firstPageBtn');
+    const prevPageBtn = document.getElementById('prevPageBtn');
+    const nextPageBtn = document.getElementById('nextPageBtn');
+    const lastPageBtn = document.getElementById('lastPageBtn');
+    const itemsPerPageSelect = document.getElementById('itemsPerPage');
+
+    if (!paginationInfo || !pageNumbers) return;
+
+    // Update info text
+    const startItem = (this.pagination.currentPage - 1) * this.pagination.itemsPerPage + 1;
+    const endItem = Math.min(this.pagination.currentPage * this.pagination.itemsPerPage, this.pagination.totalItems);
+    paginationInfo.textContent = `Showing ${startItem} - ${endItem} of ${this.pagination.totalItems} products`;
+
+    // Update button states
+    if (firstPageBtn) firstPageBtn.disabled = this.pagination.currentPage === 1;
+    if (prevPageBtn) prevPageBtn.disabled = this.pagination.currentPage === 1;
+    if (nextPageBtn) nextPageBtn.disabled = this.pagination.currentPage === this.pagination.totalPages;
+    if (lastPageBtn) lastPageBtn.disabled = this.pagination.currentPage === this.pagination.totalPages;
+
+    // Update items per page select
+    if (itemsPerPageSelect) {
+      itemsPerPageSelect.value = this.pagination.itemsPerPage === this.pagination.totalItems ? 'all' : this.pagination.itemsPerPage;
+    }
+
+    // Generate page numbers
+    this.generatePageNumbers();
+  }
+
+  // Generate page number buttons
+  generatePageNumbers() {
+    const pageNumbers = document.getElementById('pageNumbers');
+    if (!pageNumbers) return;
+
+    pageNumbers.innerHTML = '';
+
+    const totalPages = this.pagination.totalPages;
+    const currentPage = this.pagination.currentPage;
+
+    if (totalPages <= 1) return;
+
+    // Calculate page range to show
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(totalPages, currentPage + 2);
+
+    // Adjust range if we're near the beginning or end
+    if (currentPage <= 3) {
+      endPage = Math.min(5, totalPages);
+    } else if (currentPage >= totalPages - 2) {
+      startPage = Math.max(1, totalPages - 4);
+    }
+
+    // Add ellipsis at the beginning if needed
+    if (startPage > 1) {
+      this.createPageButton(1, pageNumbers);
+      if (startPage > 2) {
+        const ellipsis = document.createElement('span');
+        ellipsis.textContent = '...';
+        ellipsis.className = 'pagination-ellipsis';
+        pageNumbers.appendChild(ellipsis);
+      }
+    }
+
+    // Add page number buttons
+    for (let i = startPage; i <= endPage; i++) {
+      this.createPageButton(i, pageNumbers);
+    }
+
+    // Add ellipsis at the end if needed
+    if (endPage < totalPages) {
+      if (endPage < totalPages - 1) {
+        const ellipsis = document.createElement('span');
+        ellipsis.textContent = '...';
+        ellipsis.className = 'pagination-ellipsis';
+        pageNumbers.appendChild(ellipsis);
+      }
+      this.createPageButton(totalPages, pageNumbers);
+    }
+  }
+
+  // Create individual page button
+  createPageButton(pageNumber, container) {
+    const button = document.createElement('button');
+    button.textContent = pageNumber;
+    button.className = 'page-number';
+    button.onclick = () => this.goToPage(pageNumber);
+    
+    if (pageNumber === this.pagination.currentPage) {
+      button.classList.add('active');
+    }
+    
+    container.appendChild(button);
+  }
+
+  // Pagination navigation methods
+  goToPage(page) {
+    if (page < 1 || page > this.pagination.totalPages) return;
+    this.pagination.currentPage = page;
+    this.displayInventory(this.pagination.filteredProducts);
+  }
+
+  nextPage() {
+    if (this.pagination.currentPage < this.pagination.totalPages) {
+      this.pagination.currentPage++;
+      this.displayInventory(this.pagination.filteredProducts);
+    }
+  }
+
+  previousPage() {
+    if (this.pagination.currentPage > 1) {
+      this.pagination.currentPage--;
+      this.displayInventory(this.pagination.filteredProducts);
+    }
+  }
+
+  goToLastPage() {
+    this.pagination.currentPage = this.pagination.totalPages;
+    this.displayInventory(this.pagination.filteredProducts);
+  }
+
+  changeItemsPerPage(value) {
+    if (value === 'all') {
+      this.pagination.itemsPerPage = this.pagination.totalItems;
+    } else {
+      this.pagination.itemsPerPage = parseInt(value);
+    }
+    
+    // Reset to first page when changing items per page
+    this.pagination.currentPage = 1;
+    this.displayInventory(this.pagination.filteredProducts);
   }
 
   // Virtual scrolling version for inventory
@@ -326,7 +491,7 @@ class POSApp {
 
     if (!query || !query.trim()) {
       console.log("Empty query, showing all products");
-      this.displayProducts();
+      this.displayProducts(this.products); // Show ALL products, not limited
       return;
     }
 
@@ -342,7 +507,7 @@ class POSApp {
 
   // Optimized inventory filtering
   filterInventory() {
-    console.log("filterInventory called with chunked rendering");
+    console.log("filterInventory called with pagination");
 
     if (!this.allProducts) {
       console.log("No allProducts available for filtering");
@@ -378,8 +543,8 @@ class POSApp {
 
     console.log(`Filtered results: ${filtered.length} products`);
 
-    // Reset virtual scrolling for new results
-    this.virtualScrollConfig.currentPage = 1;
+    // Reset pagination for new results
+    this.pagination.currentPage = 1;
     this.displayInventory(filtered);
   }
 
@@ -828,6 +993,10 @@ class POSApp {
       const result = await window.electronAPI.inventory.getProducts();
       if (result.success) {
         this.allProducts = result.data;
+        
+        // Reset pagination when loading new data
+        this.pagination.currentPage = 1;
+        
         this.displayInventory(result.data);
         this.clearSelection(); // Clear any previous selections
 
@@ -1180,6 +1349,12 @@ class POSApp {
 
     console.log("Product data to save:", productData);
 
+    // Store editing state BEFORE hiding modal (modal clears this.currentEditingProduct)
+    const isEditing = !!this.currentEditingProduct;
+    const editingProductId = this.currentEditingProduct?.product_id;
+    
+    console.log("Edit state:", { isEditing, editingProductId });
+
     // Hide modal and clear filters IMMEDIATELY to maintain UI responsiveness
     console.log("Providing immediate UI feedback...");
     this.hideModal("productModal");
@@ -1206,13 +1381,13 @@ class POSApp {
       setTimeout(async () => {
         try {
           let result;
-          if (this.currentEditingProduct) {
+          if (isEditing && editingProductId) {
             console.log(
               "Updating existing product (non-blocking):",
-              this.currentEditingProduct.product_id
+              editingProductId
             );
             result = await window.electronAPI.inventory.updateProduct(
-              this.currentEditingProduct.product_id,
+              editingProductId,
               productData
             );
           } else {
@@ -1564,6 +1739,11 @@ class POSApp {
           <button onclick="posApp.printReceipt(${
             sale.sale_id
           })" class="btn-small">Reprint</button>
+          ${this.currentUser && this.currentUser.role === 'admin' ? 
+            `<button onclick="posApp.deleteSale(${sale.sale_id}, '${sale.receipt_number}')" class="btn-small btn-danger" title="Delete Sale">
+              <i class="fas fa-trash"></i>
+            </button>` : ''
+          }
         </td>
             `;
       tbody.appendChild(row);
@@ -2401,6 +2581,55 @@ class POSApp {
     }
   }
 
+  async deleteSale(saleId, receiptNumber) {
+    // Only allow admins to delete sales
+    if (!this.currentUser || this.currentUser.role !== 'admin') {
+      this.showErrorToast("Access Denied", "Only administrators can delete sales");
+      return;
+    }
+
+    const confirmed = await this.showConfirmDialog(
+      "Delete Sale Confirmation",
+      `Are you sure you want to delete this sale?`,
+      `Receipt: ${receiptNumber}\n\n⚠️ THIS ACTION CANNOT BE UNDONE!\n\n` +
+      `This will permanently remove the sale from the database and restore the stock for all items in this sale.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      // Show loading
+      const loadingMsg = this.showLoadingMessage("Deleting sale...");
+
+      const result = await window.electronAPI.sales.deleteSale(saleId);
+
+      this.hideLoadingMessage(loadingMsg);
+
+      if (result.success) {
+        this.showSuccessToast(
+          "Sale Deleted Successfully",
+          `Receipt ${receiptNumber} has been deleted and stock restored`
+        );
+        
+        // Refresh the sales table
+        await this.loadSalesTable();
+        
+        // Refresh dashboard if we're on dashboard
+        if (this.currentView === 'dashboard') {
+          await this.loadDashboardData();
+        }
+        
+        // Refresh inventory to show restored stock
+        await this.loadInventory();
+      } else {
+        this.showErrorToast("Delete Failed", result.error || "Failed to delete sale");
+      }
+    } catch (error) {
+      console.error("Delete sale error:", error);
+      this.showErrorToast("Delete Error", error.message);
+    }
+  }
+
   async testPrinter() {
     try {
       const result = await window.electronAPI.printer.testPrinter();
@@ -2596,22 +2825,57 @@ class POSApp {
       const result = await window.electronAPI.sales.createSale(saleData);
 
       if (result.success) {
-        // Automatically print receipt
-        try {
-          const printResult = await this.printReceipt(result.data.sale_id);
-          if (printResult && printResult.fallback) {
-            console.log("Receipt printed to console (no physical printer)");
-          }
-        } catch (printError) {
-          console.error("Receipt printing failed:", printError);
-          // Don't show error to user - sale still completed successfully
-        }
-
         console.log("✅ Sale completed! Receipt:", result.data.receipt_number);
-        this.showSuccessToast(
+        
+        // Show success message with print option
+        this.showSuccessToastWithPrintOption(
           "Sale Completed!",
-          `Receipt #${result.data.receipt_number} - GHS ${total.toFixed(2)}`
+          `Receipt #${result.data.receipt_number} - GHS ${total.toFixed(2)}`,
+          result.data.sale_id
         );
+
+        // Automatically print receipt using the SAME method as manual reprint
+        setTimeout(async () => {
+          try {
+            console.log("🖨️ Auto-printing receipt for sale ID:", result.data.sale_id);
+            
+            // First verify the sale data is available before printing
+            const receiptResult = await window.electronAPI.sales.getReceiptData(result.data.sale_id);
+            
+            if (!receiptResult.success) {
+              throw new Error(`Failed to get receipt data: ${receiptResult.error}`);
+            }
+            
+            console.log("📄 Receipt data retrieved successfully");
+            
+            // Now print using the exact same method as manual reprint
+            const printResult = await window.electronAPI.printer.printReceipt(receiptResult.data);
+            
+            if (printResult.success) {
+              console.log("✅ Receipt printed successfully via auto-print");
+              this.showInfoToast(
+                "Receipt Printed",
+                "Receipt sent to printer/notepad automatically",
+                3000
+              );
+            } else {
+              console.log("⚠️ Receipt printing had issues:", printResult.error);
+              this.showWarningToast(
+                "Printing Issue", 
+                "Auto-print failed. Use 'Print Receipt' button or reprint from Sales history.",
+                6000
+              );
+            }
+            
+          } catch (printError) {
+            console.error("❌ Auto-print failed:", printError);
+            this.showWarningToast(
+              "Auto-Print Failed", 
+              "Sale completed successfully. Use 'Print Receipt' button below or reprint from Sales history.",
+              6000
+            );
+          }
+        }, 1000); // Longer delay to ensure database transaction is complete
         this.cart = [];
         this.updateCart();
 
@@ -2897,6 +3161,49 @@ class POSApp {
 
   showInfoToast(title, message, duration) {
     return this.showToast("info", title, message, duration);
+  }
+
+  showSuccessToastWithPrintOption(title, message, saleId, duration = 8000) {
+    const toastContainer = document.getElementById("toastContainer");
+    if (!toastContainer) return;
+
+    const toast = document.createElement("div");
+    toast.className = "toast toast-success";
+    
+    const uniqueId = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    toast.id = uniqueId;
+
+    toast.innerHTML = `
+      <div class="toast-content">
+        <div class="toast-header">
+          <i class="fas fa-check-circle"></i>
+          <span class="toast-title">${title}</span>
+          <button class="toast-close" onclick="posApp.removeToast(document.getElementById('${uniqueId}'))">&times;</button>
+        </div>
+        <div class="toast-message">${message}</div>
+        <div class="toast-actions" style="margin-top: 10px; display: flex; gap: 10px;">
+          <button class="btn-small" onclick="posApp.printReceipt(${saleId}); posApp.removeToast(document.getElementById('${uniqueId}'));" 
+                  style="background: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">
+            <i class="fas fa-print"></i> Print Receipt
+          </button>
+          <button class="btn-small" onclick="posApp.removeToast(document.getElementById('${uniqueId}'));" 
+                  style="background: #6c757d; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">
+            Skip
+          </button>
+        </div>
+      </div>
+    `;
+
+    toastContainer.appendChild(toast);
+
+    // Auto-remove after duration
+    setTimeout(() => {
+      if (document.getElementById(uniqueId)) {
+        this.removeToast(toast);
+      }
+    }, duration);
+
+    return toast;
   }
 }
 

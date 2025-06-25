@@ -1,12 +1,14 @@
-const sqlite3 = require("sqlite3").verbose();
+const initSqlJs = require("sql.js");
 const path = require("path");
 const fs = require("fs");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 
 class DatabaseManager {
-  constructor() {
+  constructor(customDataPath = null) {
     this.db = null;
-    this.dbPath = path.join(process.cwd(), "data", "dominak757.db");
+    // BACK TO YOUR WORKING VERSION
+    this.dbPath = "C:\\Users\\bizor\\Desktop\\try\\data\\dominak757.db";
+    console.log("📁 Database path (YOUR VERSION):", this.dbPath);
   }
 
   async initialize() {
@@ -16,19 +18,28 @@ class DatabaseManager {
       fs.mkdirSync(dataDir, { recursive: true });
     }
 
-    return new Promise((resolve, reject) => {
-      this.db = new sqlite3.Database(this.dbPath, async (err) => {
-        if (err) {
-          console.error("Error opening database:", err);
-          reject(err);
-        } else {
-          console.log("Connected to SQLite database");
-          await this.createTables();
-          await this.insertDefaultData();
-          resolve();
-        }
-      });
-    });
+    try {
+      const SQL = await initSqlJs();
+      
+      // Try to load existing database file
+      let filebuffer;
+      if (fs.existsSync(this.dbPath)) {
+        filebuffer = fs.readFileSync(this.dbPath);
+        this.db = new SQL.Database(filebuffer);
+      } else {
+        this.db = new SQL.Database();
+      }
+      
+      console.log("Connected to SQLite database");
+      await this.createTables();
+      await this.insertDefaultData();
+      
+      // Save the database to file
+      this.saveDatabase();
+    } catch (err) {
+      console.error("Error opening database:", err);
+      throw err;
+    }
   }
 
   async createTables() {
@@ -173,48 +184,7 @@ class DatabaseManager {
       }
     }
 
-    // Insert sample products if none exist
-    const productsExist = await this.getQuery(
-      "SELECT COUNT(*) as count FROM products"
-    );
-
-    if (productsExist.count === 0) {
-      const sampleProducts = [
-        ["Coca Cola 350ml", 2, "1234567890123", 1.5, 2.5, 100, 20],
-        ["Bread Loaf", 2, "2345678901234", 0.8, 1.5, 50, 10],
-        ["Rice 5kg", 1, "3456789012345", 8.0, 12.0, 30, 5],
-        ["Cooking Oil 1L", 1, "4567890123456", 3.5, 5.5, 25, 5],
-        ["Milk 1L", 2, "5678901234567", 2.0, 3.0, 40, 10],
-        ["Smartphone", 3, "6789012345678", 150.0, 250.0, 15, 3],
-        ["T-Shirt", 4, "7890123456789", 8.0, 15.0, 25, 8],
-        ["Detergent Powder", 5, "8901234567890", 6.0, 9.5, 20, 5],
-        ["Instant Noodles", 2, "9012345678901", 0.6, 1.2, 100, 25],
-        ["Mineral Water 1.5L", 2, "1122334455667", 0.8, 1.5, 75, 15],
-      ];
-
-      for (const [
-        name,
-        categoryId,
-        barcode,
-        purchasePrice,
-        sellingPrice,
-        stock,
-        minStock,
-      ] of sampleProducts) {
-        await this.runQuery(
-          "INSERT INTO products (product_name, category_id, barcode, purchase_price, selling_price, stock_quantity, minimum_stock) VALUES (?, ?, ?, ?, ?, ?, ?)",
-          [
-            name,
-            categoryId,
-            barcode,
-            purchasePrice,
-            sellingPrice,
-            stock,
-            minStock,
-          ]
-        );
-      }
-    }
+    // Sample products section removed - no automatic dummy data insertion
 
     // Insert default settings
     const settingsExist = await this.getQuery(
@@ -242,56 +212,106 @@ class DatabaseManager {
   }
 
   // Generic query methods
+  saveDatabase() {
+    try {
+      if (!this.db) {
+        console.warn("⚠️ No database instance to save");
+        return;
+      }
+      
+      console.log("💾 Exporting database data...");
+      const data = this.db.export();
+      const buffer = Buffer.from(data);
+      
+      console.log(`💾 Writing ${buffer.length} bytes to ${this.dbPath}`);
+      fs.writeFileSync(this.dbPath, buffer);
+      console.log("✅ Database saved successfully");
+    } catch (err) {
+      console.error("❌ Error saving database:", err);
+      throw err;
+    }
+  }
+
   runQuery(sql, params = []) {
-    return new Promise((resolve, reject) => {
-      this.db.run(sql, params, function (err) {
-        if (err) {
-          console.error("Database error:", err);
-          reject(err);
-        } else {
-          resolve({ id: this.lastID, changes: this.changes });
-        }
-      });
-    });
+    try {
+      const stmt = this.db.prepare(sql);
+      stmt.bind(params);
+      stmt.step();
+      
+      // Get last insert ID for INSERT operations
+      let lastID = null;
+      if (sql.trim().toLowerCase().startsWith('insert')) {
+        const idStmt = this.db.prepare("SELECT last_insert_rowid() as id");
+        idStmt.step();
+        const result = idStmt.getAsObject();
+        lastID = result ? result.id : null;
+        idStmt.free();
+        console.log("🆔 Insert operation - Last ID:", lastID);
+      }
+      
+      stmt.free();
+      
+      // Save database after any write operation
+      if (sql.trim().toLowerCase().startsWith('insert') || 
+          sql.trim().toLowerCase().startsWith('update') || 
+          sql.trim().toLowerCase().startsWith('delete')) {
+        console.log("💾 Write operation detected, saving database...");
+        console.log("📝 SQL:", sql.substring(0, 100) + (sql.length > 100 ? '...' : ''));
+        this.saveDatabase();
+      }
+      
+      return { id: lastID, changes: 1 };
+    } catch (err) {
+      console.error("Database error:", err);
+      throw err;
+    }
   }
 
   getQuery(sql, params = []) {
-    return new Promise((resolve, reject) => {
-      this.db.get(sql, params, (err, row) => {
-        if (err) {
-          console.error("Database error:", err);
-          reject(err);
-        } else {
-          resolve(row);
-        }
-      });
-    });
+    try {
+      const stmt = this.db.prepare(sql);
+      stmt.bind(params);
+      const result = stmt.step() ? stmt.getAsObject() : null;
+      stmt.free();
+      return result;
+    } catch (err) {
+      console.error("Database error:", err);
+      throw err;
+    }
   }
 
   allQuery(sql, params = []) {
-    return new Promise((resolve, reject) => {
-      this.db.all(sql, params, (err, rows) => {
-        if (err) {
-          console.error("Database error:", err);
-          reject(err);
-        } else {
-          resolve(rows);
-        }
-      });
-    });
+    try {
+      const stmt = this.db.prepare(sql);
+      stmt.bind(params);
+      const results = [];
+      while (stmt.step()) {
+        results.push(stmt.getAsObject());
+      }
+      stmt.free();
+      return results;
+    } catch (err) {
+      console.error("Database error:", err);
+      throw err;
+    }
   }
 
-  // Transaction support
+  // Transaction support - simplified for SQL.js
   async beginTransaction() {
-    await this.runQuery("BEGIN TRANSACTION");
+    // SQL.js doesn't need explicit transaction management for our use case
+    // Just log that we're starting a transaction block
+    console.log("📝 Starting transaction block");
   }
 
   async commitTransaction() {
-    await this.runQuery("COMMIT");
+    // For SQL.js, just save the database after operations
+    console.log("✅ Committing transaction - saving database");
+    this.saveDatabase();
   }
 
   async rollbackTransaction() {
-    await this.runQuery("ROLLBACK");
+    // For SQL.js, we can't really rollback, so just log the attempt
+    console.warn("⚠️ Rollback attempted - SQL.js doesn't support rollback");
   }
 
   // Backup functionality
@@ -312,14 +332,15 @@ class DatabaseManager {
 
   // Close database connection
   close() {
-    return new Promise((resolve) => {
-      this.db.close((err) => {
-        if (err) {
-          console.error("Error closing database:", err);
-        }
-        resolve();
-      });
-    });
+    if (this.db) {
+      try {
+        this.saveDatabase();
+        this.db.close();
+        console.log("Database connection closed");
+      } catch (err) {
+        console.error("Error closing database:", err);
+      }
+    }
   }
 }
 
